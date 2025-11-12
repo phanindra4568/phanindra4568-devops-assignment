@@ -1,0 +1,35 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [develop, main]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Backend Tests
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pytest
+
+    - name: Frontend Tests
+      run: |
+        cd frontend
+        npm install
+        npx cypress run
+
+    - name: Build Docker Images
+      run: |
+        docker build -t myapp-backend:${{ github.sha }} backend
+        docker build -t myapp-frontend:${{ github.sha }} frontend
+
+    - name: Push to AWS ECR
+      if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+      run: |
+        echo "Push docker images to ECR here (use AWS CLI or GitHub secrets)"
